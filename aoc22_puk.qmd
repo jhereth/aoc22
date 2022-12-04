@@ -46,7 +46,6 @@ def round_score(s):
     return shape_score(s2) + outcome_score(s1, s2)
 
 print(sum(round_score(_) for _ in d))
-
 ```
 
 ## Day 2 - Part 2
@@ -260,7 +259,6 @@ Some of the pairs have noticed that one of their assignments fully contains the 
 
 In how many assignment pairs does one range fully contain the other?
 
-
 ```{python}
 test_data = """2-4,6-8
 2-3,4-5
@@ -309,7 +307,6 @@ So, in this example, the number of overlapping assignment pairs is 4.
 
 In how many assignment pairs do the ranges overlap?
 
-
 ```{python}
 test_overlap = 4
 
@@ -323,4 +320,20 @@ assert sum(process_row(r, fnc=overlap) for r in test_data) == 4
 sum(process_row(r, fnc=overlap) for r in data)
 ```
 
-# D
+# Day 5
+
+
+```{python}
+data = read_input("xx_input.txt")
+```
+
+## Day 5 - Part 2
+
+
+# Day 6
+
+```{python}
+data = read_input("xx_input.txt")
+```
+
+## Day 6 - Part 2
