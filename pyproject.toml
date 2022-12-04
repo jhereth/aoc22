@@ -1,0 +1,16 @@
+[tool.pdm]
+
+[project]
+name = ""
+version = ""
+description = ""
+authors = [
+    {name = "Joachim Hereth", email = "7327644+jhereth@users.noreply.github.com"},
+]
+dependencies = [
+    "jupyterlab>=3.5.0",
+    "jupytext>=1.14.1",
+    "setuptools>=65.6.3",
+]
+requires-python = ">=3.11"
+license = {text = "MIT"}
