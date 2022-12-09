@@ -15,6 +15,7 @@ jupyter:
 
 ```{python}
 from collections import defaultdict
+from copy import deepcopy
 from pprint import pprint
 
 
@@ -981,30 +982,600 @@ pprint(sorted(candidates, key=lambda x: x[1])[0])
 # Day 8
 
 ```{python}
-1+1
+test_input="""30373
+25512
+65332
+33549
+35390""".splitlines()
+
+def build_grid(input):
+    return [
+    [int(_) for _ in row]
+    for row in input
+]
+
+grid = build_grid(test_input)
+
+
+def check_grid(grid):
+    width = len(grid[0])
+    assert all(len(_)== width for _ in grid)
+    print(width, len(grid))
+
+check_grid(grid)
+
+def get_line(grid, index: int, row=True, direction=True):
+    if row:
+        line = grid[index]
+    else:
+        line = [_[index] for _ in grid]
+    if direction:
+        return line
+    return line[::-1]
+
+pprint(grid)
+pprint(get_line(grid, 0))
+assert get_line(grid, 0) ==  [3, 0, 3, 7, 3]
+pprint(get_line(grid, 0, row=False))
+assert get_line(grid, 0, row=False) ==  [3, 2, 6, 3, 3]
+
+def is_visible_line(index, line):
+    if index in [0, len(line) - 1]:
+        return True
+    result = (
+        (r1:=max(line[0:index]) < line[index])
+    or
+        (r2:=max(line[index+1:]) < line[index])
+    )
+    # print(r1)
+    return result
+
+assert is_visible_line(0, [3, 0, 3, 7, 3])
+assert is_visible_line(4, [3, 0, 3, 7, 3])
+
+assert is_visible_line(2, [2, 5, 5, 1, 2])
+assert not is_visible_line(3, [2, 5, 5, 1, 2])
+
+def count_visible(grid):
+    count = 0
+    for i in range(len(grid[0])):
+        for j in range(len(grid)):
+            # print(i,j)
+            if is_visible_line(i, get_line(grid, j)) or is_visible_line(j, get_line(grid, i, row=False)):
+                count += 1
+    return count
+
+print(count_visible(grid))
+assert count_visible(grid) == 21
+
 ```
 
 ```{python}
 data = read_input("08_input.txt")
+
+grid = build_grid(data)
+check_grid(grid)
+count_visible(grid)
 ```
 
 ## Day 8 - Part 2
 
 ```{python}
+
+test_grid = build_grid(test_input)
+
+
+def scenic_segment(segment):
+    height = segment[0]
+    # print(segment, height)
+    count = 0
+    for _ in segment[1:]:
+        count += 1
+        # print(_)
+        if _ >= height:
+            break
+    # print(count)
+    return count
+
+assert scenic_segment([5, 1, 2]) == 2
+assert scenic_segment([5]) == 0
+assert scenic_segment([5, 1, 2, 5, 3]) == 3
+assert scenic_segment([5, 1, 2, 7, 6]) == 3
+assert scenic_segment([5, 1, 2, 7, 10]) == 3
+
+
+def scenic_score(grid, i, j):
+    row = get_line(grid, i)
+    # print("left", row[:j+1])
+    left = scenic_segment(row[:j+1][::-1])
+    right = scenic_segment(row[j:])
+    col = get_line(grid, j, row=False)
+    up = scenic_segment(col[:i+1][::-1])
+    down = scenic_segment(col[i:])
+    # print(up, left, right, down)
+    return up * left * right * down
+
+assert scenic_score(test_grid, 1, 2) == 4
+assert scenic_score(test_grid, 3, 2) == 8
+
+from itertools import product
+def max_scenic(grid):
+    # print(list(product(range(len(grid[0])), range(len(grid)))))
+    return max(scenic_score(grid, i, j)
+        for (i,j) in product(range(len(grid[0])), range(len(grid)))
+    )
+
+assert max_scenic(test_grid) == 8
+
+print(max_scenic(grid))
 ```
 
 
 # Day 9
+
+This rope bridge creaks as you walk along it. You aren't sure how old it is, or whether it can even support your weight.
+
+It seems to support the Elves just fine, though. The bridge spans a gorge which was carved out by the massive river far below you.
+
+You step carefully; as you do, the ropes stretch and twist. You decide to distract yourself by modeling rope physics; maybe you can even figure out where not to step.
+
+Consider a rope with a knot at each end; these knots mark the head and the tail of the rope. If the head moves far enough away from the tail, the tail is pulled toward the head.
+
+Due to nebulous reasoning involving Planck lengths, you should be able to model the positions of the knots on a two-dimensional grid. Then, by following a hypothetical series of motions (your puzzle input) for the head, you can determine how the tail will move.
+
+Due to the aforementioned Planck lengths, the rope must be quite short; in fact, the head (H) and tail (T) must always be touching (diagonally adjacent and even overlapping both count as touching):
+
+```
+....
+.TH.
+....
+
+....
+.H..
+..T.
+....
+
+...
+.H. (H covers T)
+...
+```
+
+If the head is ever two steps directly up, down, left, or right from the tail, the tail must also move one step in that direction so it remains close enough:
+
+```
+.....    .....    .....
+.TH.. -> .T.H. -> ..TH.
+.....    .....    .....
+
+...    ...    ...
+.T.    .T.    ...
+.H. -> ... -> .T.
+...    .H.    .H.
+...    ...    ...
+```
+
+Otherwise, if the head and tail aren't touching and aren't in the same row or column, the tail always moves one step diagonally to keep up:
+
+
+```
+.....    .....    .....
+.....    ..H..    ..H..
+..H.. -> ..... -> ..T..
+.T...    .T...    .....
+.....    .....    .....
+
+.....    .....    .....
+.....    .....    .....
+..H.. -> ...H. -> ..TH.
+.T...    .T...    .....
+.....    .....    .....
+```
+
+You just need to work out where the tail goes as the head follows a series of motions. Assume the head and the tail both start at the same position, overlapping.
+
+For example:
+
+```{python}
+
+test_moves = """R 4
+U 4
+L 3
+D 1
+R 4
+D 1
+L 5
+R 2""".splitlines()
+```
+
+This series of motions moves the head right four steps, then up four steps, then left three steps, then down one step, and so on. After each step, you'll need to update the position of the tail if the step means the head is no longer adjacent to the tail. Visually, these motions occur as follows (s marks the starting position as a reference point):
+
+== Initial State ==
+
+```
+......
+......
+......
+......
+H.....  (H covers T, s)
+```
+
+== R 4 ==
+
+```
+......
+......
+......
+......
+TH....  (T covers s)
+
+......
+......
+......
+......
+sTH...
+
+......
+......
+......
+......
+s.TH..
+
+......
+......
+......
+......
+s..TH.
+
+
+== U 4 ==
+
+......
+......
+......
+....H.
+s..T..
+
+......
+......
+....H.
+....T.
+s.....
+
+......
+....H.
+....T.
+......
+s.....
+
+....H.
+....T.
+......
+......
+s.....
+
+== L 3 ==
+
+...H..
+....T.
+......
+......
+s.....
+
+..HT..
+......
+......
+......
+s.....
+
+.HT...
+......
+......
+......
+s.....
+
+== D 1 ==
+
+..T...
+.H....
+......
+......
+s.....
+
+== R 4 ==
+
+..T...
+..H...
+......
+......
+s.....
+
+..T...
+...H..
+......
+......
+s.....
+
+......
+...TH.
+......
+......
+s.....
+
+......
+....TH
+......
+......
+s.....
+
+== D 1 ==
+
+......
+....T.
+.....H
+......
+s.....
+
+== L 5 ==
+
+......
+....T.
+....H.
+......
+s.....
+
+......
+....T.
+...H..
+......
+s.....
+
+......
+......
+..HT..
+......
+s.....
+
+......
+......
+.HT...
+......
+s.....
+
+......
+......
+HT....
+......
+s.....
+
+== R 2 ==
+
+......
+......
+.H....  (H covers T)
+......
+s.....
+
+......
+......
+.TH...
+......
+s.....
+```
+
+After simulating the rope, you can count up all of the positions the tail visited at least once. In this diagram, s again marks the starting position (which the tail also visited) and # marks other positions the tail visited:
+
+```
+..##..
+...##.
+.####.
+....#.
+s###..
+```
+
+So, there are 13 positions the tail visited at least once.
+
+Simulate your complete hypothetical series of motions. How many positions does the tail of the rope visit at least once?
+
+
+```{python}
+
+
+def print_grid(grid):
+    for (i, row) in enumerate(grid):
+        print(f"{i:2d}", ''.join(row))
+def move_head(head_pos, direction):
+    # print("H", head_pos)
+    if direction == 'U':
+        head_pos[0] -= 1
+    elif direction == 'D':
+        head_pos[0] += 1
+    elif direction == 'L':
+        head_pos[1] -= 1
+    elif direction == 'R':
+        head_pos[1] += 1
+    return head_pos
+
+def sign(x):
+    return (x > 0) - (x < 0)
+
+def tail_follows(head_pos, tail_pos):
+    for i in range(2):
+        j = 1 - i
+        if abs(d1:=head_pos[j] - tail_pos[j]) >= 2:
+            if (d:=head_pos[i] - tail_pos[i]) != 0:
+                tail_pos[i] += sign(d)
+            tail_pos[j] += sign(d1)
+    return tail_pos
+
+def one_move(head_pos, tail_pos, move):
+    visited_positions = set()
+    direction, distance = move
+    for _ in range(distance):
+        head_pos = move_head(head_pos, direction)
+        tail_pos = tail_follows(head_pos, tail_pos)
+        # print(f"Step {_}")
+        visited_positions.add(tuple(tail_pos))
+    return head_pos, tail_pos, visited_positions
+
+def process_chain(moves, knots=10, grid=False, width=30, height=30, start_x = 15, start_y=12):
+
+    def pgrid():
+        grid = deepcopy(empty_grid)
+        for (k, pos) in positions.items():
+            # print("Draw", k,pos)
+            if k == knots -1:
+                k="T"
+            if k == 0:
+                k="H"
+            grid[pos[0]][pos[1]] = str(k)
+        print_grid(grid)
+    start_pos = [start_y, start_x]
+    if grid:
+        empty_grid = [["." for _ in range(width)] for _ in range(height)]
+    positions = {_: start_pos.copy() for _ in range(knots)}
+    visited_positions = set()
+    for (i, move) in enumerate(moves):
+        print("==================================")
+        print(f"{i}/{len(moves)-1}", move, positions)
+        direction, distance = move
+        for _ in range(distance):
+            print("Step", _)
+            # pprint(positions)
+            positions[0] = move_head(positions[0], direction)
+            for i in range(1, knots):
+                positions[i] = tail_follows(positions[i-1], positions[i])
+            visited_positions.add(tuple(positions[knots - 1]))
+        # grid[head_pos[0]][head_pos[1]] = 'H'
+        # grid[tail_pos[0]][tail_pos[1]] = 'T'
+        # print_grid(grid)
+        # print(len(grid))
+        # add the tail's position to the set of visited positions
+        
+        # update the grid with the new positions of the head and tail
+            if grid:
+                pgrid()    
+    # return the final grid and the number of visited positions
+    pprint(visited_positions)
+    return len(visited_positions)
+
+def process_moves(moves, width=6, height=5):
+    # create a grid to represent the rope and its knots
+    # grid = [['.' for _ in range(width)] for _ in range(height)]
+    grid = ["."]
+    # initialize the positions of the head and tail
+    head_pos = [height - 1, 0]
+    tail_pos = [height - 1, 0]
+    # keep track of the positions visited by the tail
+    visited_positions = set()
+    
+    # iterate through the series of moves
+    for (i, move) in enumerate(moves):
+        print(f"{i}/{len(moves)-1}", move, head_pos, tail_pos)
+        head_pos, tail_pos, new_positions = one_move(head_pos, tail_pos, move)
+        visited_positions |= new_positions
+        # grid[head_pos[0]][head_pos[1]] = 'H'
+        # grid[tail_pos[0]][tail_pos[1]] = 'T'
+        # print_grid(grid)
+        # print(len(grid))
+        # add the tail's position to the set of visited positions
+        
+        # update the grid with the new positions of the head and tail
+    
+    # return the final grid and the number of visited positions
+    return grid, len(visited_positions)
+
+def extract_moves(input):
+    return [((p:=_.split())[0], int(p[1])) for _ in input] 
+
+moves = extract_moves(test_moves2)
+print(moves)
+positions = process_chain(moves[:10], knots=10, grid=True, width=30, height=30, start_x=15, start_y=15)
+# print_grid(grid)
+print(f"visited {positions} positions")  # 13 or 36 for test_moves2
+```
+
+```{python}
+data = read_input("09_input.txt")
+moves = extract_moves(data)
+positions = process_chain(moves, knots=10, grid=False, width=100, height=100, start_x=50, start_y=50)
+# print_grid(grid)
+print(f"visited {positions} positions")  # 2455
+
+```
+
+## Day 9 - Part 2
+
+```{python}
+
+test_moves2 = """R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20""".splitlines()
+
+
+moves = extract_moves(test_moves2)
+
+def process_chain(moves, knots=10, grid=False):
+
+    def pgrid():
+        grid = deepcopy(empty_grid)
+        for (k, pos) in positions.items():
+            # print("Draw", k,pos)
+            grid[pos[0]][pos[1]] = str(k)
+        print_grid(grid)
+    width = 30
+    height = 30
+    start_pos = [15, 12]
+    if grid:
+        empty_grid = [["." for _ in range(width)] for _ in range(height)]
+    positions = {_: start_pos.copy() for _ in range(knots)}
+    visited_positions = set()
+    for (i, move) in enumerate(moves):
+        print("==================================")
+        print(f"{i}/{len(moves)-1}", move, positions)
+        direction, distance = move
+        for _ in range(distance):
+            print("Step", _)
+            # pprint(positions)
+            positions[0] = move_head(positions[0], direction)
+            for i in range(1, knots):
+                positions[i] = tail_follows(positions[i-1], positions[i])
+            visited_positions.add(tuple(positions[knots - 1]))
+        # grid[head_pos[0]][head_pos[1]] = 'H'
+        # grid[tail_pos[0]][tail_pos[1]] = 'T'
+        # print_grid(grid)
+        # print(len(grid))
+        # add the tail's position to the set of visited positions
+        
+        # update the grid with the new positions of the head and tail
+            if grid:
+                pgrid()    
+    # return the final grid and the number of visited positions
+    pprint(visited_positions)
+    return len(visited_positions)
+
+print(moves)
+print(f"Visited {process_chain(moves[:3], grid=False)} positions")
+moves = extract_moves(data)
+print(f"Visited {process_chain(moves)} positions")  # 2455
+
+```
+
+# Day 10
 
 ```{python}
 1+1
 ```
 
 ```{python}
-data = read_input("09_input.txt")
+data = read_input("10_input.txt")
 ```
 
-## Day 9 - Part 2
+## Day 10 - Part 2
 
 ```{python}
 ```
