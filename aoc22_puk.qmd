@@ -1568,7 +1568,218 @@ print(f"Visited {process_chain(moves)} positions")  # 2455
 # Day 10
 
 ```{python}
-1+1
+test_input = """noop
+addx 3
+addx -5""".splitlines()
+
+durations = {
+    "noop": 1,
+    "addx": 2,
+}
+
+def parse(line):
+    if line == "noop":
+        return durations["noop"], 0
+    ins, val = line.split()
+    return durations[ins], int(val)
+
+
+def create_graph(data):
+    graph = {}
+    cycle = 1
+    value = 1
+    for line in data:
+        duration, val = parse(line)
+        for _ in range(duration):
+            graph[cycle] = value
+            cycle += 1
+        value += val
+    graph[cycle] = value
+    return graph
+
+graph = create_graph(test_input) 
+pprint(graph)
+assert graph[1] == 1
+assert graph[2] == 1
+assert graph[3] == 1
+assert graph[4] == 4
+assert graph[5] == 4
+assert graph[6] == -1
+
+test_input2 = """addx 15
+addx -11
+addx 6
+addx -3
+addx 5
+addx -1
+addx -8
+addx 13
+addx 4
+noop
+addx -1
+addx 5
+addx -1
+addx 5
+addx -1
+addx 5
+addx -1
+addx 5
+addx -1
+addx -35
+addx 1
+addx 24
+addx -19
+addx 1
+addx 16
+addx -11
+noop
+noop
+addx 21
+addx -15
+noop
+noop
+addx -3
+addx 9
+addx 1
+addx -3
+addx 8
+addx 1
+addx 5
+noop
+noop
+noop
+noop
+noop
+addx -36
+noop
+addx 1
+addx 7
+noop
+noop
+noop
+addx 2
+addx 6
+noop
+noop
+noop
+noop
+noop
+addx 1
+noop
+noop
+addx 7
+addx 1
+noop
+addx -13
+addx 13
+addx 7
+noop
+addx 1
+addx -33
+noop
+noop
+noop
+addx 2
+noop
+noop
+noop
+addx 8
+noop
+addx -1
+addx 2
+addx 1
+noop
+addx 17
+addx -9
+addx 1
+addx 1
+addx -3
+addx 11
+noop
+noop
+addx 1
+noop
+addx 1
+noop
+noop
+addx -13
+addx -19
+addx 1
+addx 3
+addx 26
+addx -30
+addx 12
+addx -1
+addx 3
+addx 1
+noop
+noop
+noop
+addx -9
+addx 18
+addx 1
+addx 2
+noop
+noop
+addx 9
+noop
+noop
+noop
+addx -1
+addx 2
+addx -37
+addx 1
+addx 3
+noop
+addx 15
+addx -21
+addx 22
+addx -6
+addx 1
+noop
+addx 2
+addx 1
+noop
+addx -10
+noop
+noop
+addx 20
+addx 1
+addx 2
+addx 2
+addx -6
+addx -11
+noop
+noop
+noop""".splitlines()
+
+graph = create_graph(test_input2)
+# pprint(graph)
+assert graph[20] == 21
+assert graph[60] == 19
+assert graph[100] == 18
+assert graph[140] == 21
+assert graph[180] == 16
+assert graph[220] == 18
+
+def signal_strength(graph, max_=220):
+    result = 0
+    cycle = 20
+    for _ in range((max_ - 20)//40 + 1):
+        try:
+            signal = graph[cycle]
+        except:
+            print(f"no value forund for {cycle}")
+            return result
+        # print(cycle, signal, result)
+        result += signal * cycle
+        cycle += 40
+    return result
+
+assert signal_strength(graph) == 13140
+
+
+
 ```
 
 ```{python}
