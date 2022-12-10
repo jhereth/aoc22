@@ -1784,10 +1784,76 @@ assert signal_strength(graph) == 13140
 
 ```{python}
 data = read_input("10_input.txt")
+graph = create_graph(data)
+print(f"{signal_strength(graph)}") # 13720
 ```
 
 ## Day 10 - Part 2
 
 ```{python}
+def draw_graph(graph, max_=240):
+    def is_visible (cycle, val):
+        return abs(val - cycle % 40) <= 1
+    crt = [["." for _ in range(40)] for _ in range(6)]
+    for cycle in range(max_):
+        val = graph[cycle+1]
+        if is_visible(cycle, val):
+            c = "#"
+        else:
+            c = "."
+        # print(cycle, cycle % 40, val, c)
+        crt[cycle // 40][cycle % 40] = c
+    # pprint(crt)
+    return [ "".join(crt[i]) for i in range(6)]
+
+graph = create_graph(test_input2)
+# dg = draw_graph(graph)
+assert dg == ['##..##..##..##..##..##..##..##..##..##..',
+ '###...###...###...###...###...###...###.',
+ '####....####....####....####....####....',
+ '#####.....#####.....#####.....#####.....',
+ '######......######......######......####',
+ '#######.......#######.......#######.....']
+ 
+# pprint(dg)
+
+
+graph = create_graph(data)
+pprint(draw_graph(graph))
+# pprint(graph)
 ```
 
+# Day 11
+
+```{python}
+1+1
+```
+
+
+```{python}
+data = read_input("11_input.txt")
+
+```
+
+## Day 11 - Part 2
+
+```{python}
+```
+
+
+# Day 12
+
+```{python}
+1+1
+```
+
+
+```{python}
+data = read_input("12_input.txt")
+
+```
+
+## Day 12 - Part 2
+
+```{python}
+```
