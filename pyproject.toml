@@ -15,6 +15,7 @@ dependencies = [
     "jupyterlab-code-formatter>=1.5.3",
     "isort>=5.10.1",
     "black>=22.10.0",
+    "tqdm>=4.64.1",
 ]
 requires-python = ">=3.11"
 license = {text = "MIT"}

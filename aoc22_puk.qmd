@@ -1826,7 +1826,112 @@ pprint(draw_graph(graph))
 # Day 11
 
 ```{python}
-1+1
+test_input = """Monkey 0:
+  Starting items: 79, 98
+  Operation: new = old * 19
+  Test: divisible by 23
+    If true: throw to monkey 2
+    If false: throw to monkey 3
+
+Monkey 1:
+  Starting items: 54, 65, 75, 74
+  Operation: new = old + 6
+  Test: divisible by 19
+    If true: throw to monkey 2
+    If false: throw to monkey 0
+
+Monkey 2:
+  Starting items: 79, 60, 97
+  Operation: new = old * old
+  Test: divisible by 13
+    If true: throw to monkey 1
+    If false: throw to monkey 3
+
+Monkey 3:
+  Starting items: 74
+  Operation: new = old + 3
+  Test: divisible by 17
+    If true: throw to monkey 0
+    If false: throw to monkey 1""".splitlines()
+
+
+from attrs import define
+from collections.abc import Callable
+import re
+@define
+class Monkey:
+    # id: int
+    starting_items: list[int]
+    operation: str
+    divisible: int
+    throw: tuple[int, int]
+
+def parse_monkeys(input):
+    monkeys = {}
+    id_, starting_items, operation, divisible, true_monkey, false_monkey = None, None, None, None, None, None
+    for line in input:
+        if r:=re.search(r'^Monkey ([0-9]+):', line):
+            if id_ is not None:
+                monkeys[id_] = Monkey(
+                    starting_items=starting_items,
+                    operation=operation,
+                    divisible=divisible,
+                    throw=(true_monkey, false_monkey),
+                    )
+            id_ = int(r[1])
+            # print(f"Found Monkey {id_}")
+        if r:=re.search(r'Starting items: ([0-9, ]+)', line):
+            starting_items =list(map(int, r[1].split(",")))
+            # print(f"Found starting items {starting_items}")
+        if r:=re.search(r'Operation: new = (.+)', line):
+            operation = r[1].strip()
+            # print(f"found operation {operation}")
+        if r:=re.search(r'Test: divisible by ([0-9]+)', line):
+            divisible = int(r[1])
+            # print(f"found divisor {divisible}")
+        if r:=re.search(r'If true: throw to monkey ([0-9]+)', line):
+            true_monkey = int(r[1])
+            # print(f"found target if true {true_monkey}")
+        if r:=re.search(r'If false: throw to monkey ([0-9]+)', line):
+            false_monkey = int(r[1])
+            # print(f"found target if false {false_monkey}")
+    monkeys[id_] = Monkey(
+        starting_items=starting_items,
+        operation=operation,
+        divisible=divisible,
+        throw=(true_monkey, false_monkey),
+        )
+    
+    return monkeys
+
+monkeys=parse_monkeys(test_input)
+# pprint(monkeys)
+# print(test_input)
+
+def one_round(monkeys):
+    def worry_change(item, operation):
+        old = item
+        return eval(operation) // 3
+    counts = {}
+    for i in range(len(monkeys)):
+        m = monkeys[i]
+        counts[i] = len(m.starting_items)
+        # pprint(m)
+        while m.starting_items:
+            item = m.starting_items.pop(0)
+            worry = worry_change(item, m.operation)
+            test = (worry % m.divisible != 0)
+            throw_to=m.throw[test]
+            # print(i, item, worry, test, throw_to)
+            monkeys[throw_to].starting_items.append(worry)
+    return monkeys, counts
+            
+
+for round in range(10):
+    print(f"Round {round+1}")
+    monkeys, counts = one_round(monkeys)
+    pprint(monkeys)
+
 ```
 
 
