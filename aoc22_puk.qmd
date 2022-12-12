@@ -1866,10 +1866,10 @@ class Monkey:
     divisible: int
     throw: tuple[int, int]
 
-def parse_monkeys(input):
+def parse_monkeys(input_):
     monkeys = {}
     id_, starting_items, operation, divisible, true_monkey, false_monkey = None, None, None, None, None, None
-    for line in input:
+    for line in input_:
         if r:=re.search(r'^Monkey ([0-9]+):', line):
             if id_ is not None:
                 monkeys[id_] = Monkey(
@@ -1908,10 +1908,19 @@ monkeys=parse_monkeys(test_input)
 # pprint(monkeys)
 # print(test_input)
 
-def one_round(monkeys):
-    def worry_change(item, operation):
+from functools import lru_cache
+from math import lcm
+def one_round(monkeys, relief=True, l=None):
+
+    @lru_cache(maxsize=1_000_000)
+    def item_test(item, operation, divisible, relief, l):
         old = item
-        return eval(operation) // 3
+        new = eval(operation) 
+        if relief:
+            new = new // 3
+        else:
+            new = new % l
+        return (new % divisible != 0), new
     counts = {}
     for i in range(len(monkeys)):
         m = monkeys[i]
@@ -1919,28 +1928,171 @@ def one_round(monkeys):
         # pprint(m)
         while m.starting_items:
             item = m.starting_items.pop(0)
-            worry = worry_change(item, m.operation)
-            test = (worry % m.divisible != 0)
+            test, worry = item_test(item, m.operation, m.divisible, relief, l)
             throw_to=m.throw[test]
             # print(i, item, worry, test, throw_to)
             monkeys[throw_to].starting_items.append(worry)
     return monkeys, counts
             
 
-for round in range(10):
-    print(f"Round {round+1}")
-    monkeys, counts = one_round(monkeys)
-    pprint(monkeys)
+# for round in range(10):
+#     print(f"Round {round+1}")
+#     monkeys, _ = one_round(monkeys)
+#     pprint(monkeys)
+
+from collections import Counter
+from tqdm import tqdm
+
+def activity(monkeys, rounds, relief=True):
+    l = lcm(*[m.divisible for m in monkeys.values()])
+    total_counts = defaultdict(int)
+    for _ in tqdm(range(rounds)):
+        monkeys, counts = one_round(monkeys, relief, l)
+        for i in range(len(counts)):
+            total_counts[i] += counts[i]
+    return Counter(total_counts)
+
+
+def monkey_business(c):
+    [a, b] = [_[1] for _ in c.most_common(2)]
+    return a*b 
+
+c = activity(monkeys, 20)
+print(monkey_business(c))  # 10605
 
 ```
 
 
 ```{python}
 data = read_input("11_input.txt")
-
+monkeys = parse_monkeys(data)
+c = activity(monkeys, 20)
+print(monkey_business(c))  # 55930
 ```
 
 ## Day 11 - Part 2
+
+```{python}
+monkeys = parse_monkeys(test_input)
+counters = {}
+for i in range(1, 11):
+    c = activity(monkeys, 1000, False)
+    counters[i] = c
+    print(i, c)
+    # pprint(monkeys)
+
+total_counter=sum(counters.values(), start=Counter())
+print(total_counter)
+print(monkey_business(total_counter)) # 2713310158
+
+```
+
+```{python}
+data = read_input("11_input.txt")
+monkeys = parse_monkeys(data)
+
+counters = {}
+for i in range(1, 11):
+    c = activity(monkeys, 1000, False)
+    counters[i] = c
+    print(i, c)
+    # pprint(monkeys)
+
+total_counter=sum(counters.values(), start=Counter())
+print(total_counter)
+print(monkey_business(total_counter)) # 2713310158
+
+```
+# Day 12
+
+```{python}
+test_input = """Sabqponm
+abcryxxl
+accszExk
+acctuvwj
+abdefghi""".splitlines()
+
+def find_point(data, point="S"):
+    for i in range(len(data)):
+        if point in data[i]:
+            return (i,data[i].index(point))
+
+assert find_point(test_input, "S") == (0,0)
+assert find_point(test_input, "E") == (2,5)
+
+
+def width_height(data):
+    width = len(data[0])
+    height = len(data)
+    return width, height
+
+width, height = width_height(test_input)
+# print(width, height)
+assert width == 8
+assert height == 5
+
+start_pos = find_point(test_input, "S")
+end_pos = find_point(test_input, "E")
+
+
+NAN_VALUE=999
+def height_at(data, i, j):
+    width, height = width_height(data)
+    if ((i < 0) or (i>=height) or (j<0) or (j>=width)):
+        return NAN_VALUE
+    c = data[i][j]
+    if c == "S":
+        c = "a"
+    if c == "E":
+        c = "z"
+    return ord(c) - ord("a")
+
+assert height_at(data, *start_pos) == 0
+# assert height_at(data, *end_pos) == 25
+
+import networkx as nx
+
+def initialize_graph(data):
+    G = nx.DiGraph()
+    width, height = width_height(data)
+    for i in range(height):
+        for j in range(width):
+            G.add_node((i,j))
+    for i in range(height):
+        for j in range(width):
+            from_node = (i,j)
+            from_height = height_at(data, i, j)
+            for (i2, j2) in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                to_i = i + i2
+                to_j = j + j2
+                to_height = height_at(data, to_i, to_j)
+                if (to_height <= from_height + 1):
+                    G.add_edge(from_node, (to_i, to_j))
+    return G
+
+G = initialize_graph(test_input)
+print(G)
+sp = nx.shortest_path(G, start_pos, end_pos)
+print(sp, len(sp))
+assert len(sp)-1 == 31
+print("success")
+
+```
+
+
+```{python}
+data = read_input("12_input.txt")
+start_pos = find_point(data, "S")
+end_pos = find_point(data, "E")
+G = initialize_graph(data)
+print(G)
+sp = nx.shortest_path(G, start_pos, end_pos)
+print("result", len(sp)-1, sp)
+
+# pprint(graph.graph)
+```
+
+## Day 12 - Part 2
 
 ```{python}
 ```
@@ -1949,16 +2101,76 @@ data = read_input("11_input.txt")
 # Day 12
 
 ```{python}
-1+1
+data = test_input
+G = initialize_graph(data)
+start_pos = find_point(data, "S")
+end_pos = find_point(data, "E")
+height_at(data, *end_pos)
+print("end", end_pos)
+for (i, layer) in enumerate(nx.bfs_layers(G.reverse(), end_pos)):
+    for node in layer:
+        if height_at(data, *node) == 0:
+            print(i, node)
+            break
+
+data = read_input("12_input.txt")
+G = initialize_graph(data)
+start_pos = find_point(data, "S")
+end_pos = find_point(data, "E")
+height_at(data, *end_pos)
+print("end", end_pos)
+for (i, layer) in enumerate(nx.bfs_layers(G.reverse(), end_pos)):
+    for node in layer:
+        if height_at(data, *node) == 0:
+            print(i, node)
+            break
+
+
+
+```
+
+## Day 13
+
+```{python}
+test_input = """
+""".splitlines()
+
+data = test_input
+
+
+print("success")
 ```
 
 
 ```{python}
-data = read_input("12_input.txt")
+data = read_input("13_input.txt")
 
 ```
 
-## Day 12 - Part 2
+## Day 13 - Part 2
+
+```{python}
+```
+
+## Day 14
+
+```{python}
+test_input = """
+""".splitlines()
+
+data = test_input
+
+
+print("success")
+```
+
+
+```{python}
+data = read_input("14_input.txt")
+
+```
+
+## Day 14 - Part 2
 
 ```{python}
 ```

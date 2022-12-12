@@ -16,6 +16,7 @@ dependencies = [
     "isort>=5.10.1",
     "black>=22.10.0",
     "tqdm>=4.64.1",
+    "networkx>=2.8.8",
 ]
 requires-python = ">=3.11"
 license = {text = "MIT"}
