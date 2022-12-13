@@ -2132,10 +2132,104 @@ for (i, layer) in enumerate(nx.bfs_layers(G.reverse(), end_pos)):
 ## Day 13
 
 ```{python}
-test_input = """
+test_input = """[1,1,3,1,1]
+[1,1,5,1,1]
+
+[[1],[2,3,4]]
+[[1],4]
+
+[9]
+[[8,7,6]]
+
+[[4,4],4,4]
+[[4,4],4,4,4]
+
+[7,7,7,7]
+[7,7,7]
+
+[]
+[3]
+
+[[[]]]
+[[]]
+
+[1,[2,[3,[4,[5,6,7]]]],8,9]
+[1,[2,[3,[4,[5,6,0]]]],8,9]
 """.splitlines()
 
 data = test_input
+
+# pprint(data)
+import json
+def parse_data(data):
+    data = deepcopy(data)
+    pairs = []
+    i = 0
+    while data:
+        line = data.pop(0)
+        print("XXX", line, "XXX")
+        if line == "":
+            continue
+        # left = json.loads(data.pop(0))
+        left = json.loads(line)
+        right = json.loads(data.pop(0))
+        pairs.append((left, right))
+        i += 2
+        print(i, left, right)
+        # empty = data.pop(0)
+        # print("|", empty, "|")
+        # assert empty == ""
+    return pairs
+
+
+def compare(pair):
+    """
+    1 = yes
+    -1 = no
+    0 = continue
+    """
+    left, right = pair
+    # print(left, right, type(left), type(right))
+    if isinstance(left, int):
+        if isinstance(right, int):
+            if left < right:
+                return 1
+            if left > right:
+                return -1
+            return 0
+        assert isinstance(right, list)
+        return compare(([left], right))
+    assert isinstance(left, list)
+    if isinstance(right, int):
+        return compare((left, [right]))
+    # two lists
+    for p in zip(left, right):
+        if (r:=compare(p)) != 0:
+            return r
+    if len(left) <= len(right):
+        return 1
+    return -1
+
+
+pairs = parse_data(data) 
+
+
+assert compare(([2,3,4], 4))
+# print(p:=pairs[3])
+# print(compare(p))
+test_compare = [compare(p) for p in pairs]
+# print(test_compare)
+assert test_compare == [1, 1, -1, 1, -1, 1, -1, -1]
+
+def main(data):
+    pairs = parse_data(data)
+    sum = 0
+    for i, pair in enumerate(pairs):
+        if (r:=compare(pair)) == 1:
+            sum += (i + 1)  # The elves have 1-based index
+        # print(i, pair, sum, r)
+    return sum
+print("result", main(data))
 
 
 print("success")
@@ -2145,11 +2239,70 @@ print("success")
 ```{python}
 data = read_input("13_input.txt")
 
+print(main(data))  # 5760
 ```
 
 ## Day 13 - Part 2
 
 ```{python}
+
+data = test_input
+
+
+
+markers = [ [[2]], [[6]]]
+def parse_single(data):
+    packets = []
+    for line in data:
+        if line == "":
+            continue
+        packets.append(json.loads(line))
+    packets += markers
+    return packets
+
+def sort(inp):
+    new = []
+    for p in inp:
+        # print("====")
+        # pprint(p)
+        new_i = 0
+        for q in new:
+            pprint(q)
+            new_i += 1
+            if compare((q, p)) >= 0:
+                continue
+        print(f"inserting p at {new_i}")
+        pprint(new)
+        new.insert(new_i, p)
+    return new
+
+from functools import cmp_to_key
+
+def comp2(lhs, rhs):
+    return compare((lhs, rhs))
+
+def main2(data):
+    inp = parse_single(data)
+    new = sorted(inp, key=cmp_to_key(comp2), reverse=True)
+    result = 1
+    for i, p in enumerate(new, start=1):
+        if p in markers:
+            result *= i
+    return result
+
+
+
+
+print(main2(data))
+
+```
+
+
+```{python}
+data = read_input("13_input.txt")
+
+print(main2(data))  # 26670
+
 ```
 
 ## Day 14
@@ -2160,17 +2313,77 @@ test_input = """
 
 data = test_input
 
+def main(data):
+    result = None
+    return result
 
+print(main(data))
 print("success")
 ```
-
 
 ```{python}
 data = read_input("14_input.txt")
 
+print("final result", main(data))
 ```
 
 ## Day 14 - Part 2
 
 ```{python}
+
+data = test_input
+
+def main2(data):
+    result = None
+    return result
+
+print("test result", main2(data))
+
+```
+```{python}
+data = read_input("14_input.txt")
+
+print("final result 2", main2(data))
+```
+
+
+## Day 15
+
+```{python}
+test_input = """
+""".splitlines()
+
+data = test_input
+
+def main(data):
+    result = None
+    return result
+
+print(main(data))
+print("success")
+```
+
+```{python}
+data = read_input("15_input.txt")
+
+print("final result", main(data))
+```
+
+## Day 15 - Part 2
+
+```{python}
+
+data = test_input
+
+def main2(data):
+    result = None
+    return result
+
+print("test result", main2(data))
+
+```
+```{python}
+data = read_input("15_input.txt")
+
+print("final result 2", main2(data))
 ```
