@@ -2308,17 +2308,110 @@ print(main2(data))  # 26670
 ## Day 14
 
 ```{python}
-test_input = """
+test_input = """498,4 -> 498,6 -> 496,6
+503,4 -> 502,4 -> 502,9 -> 494,9
 """.splitlines()
+
+start_point = (500, 0)
+
+test_result = 24
 
 data = test_input
 
-def main(data):
-    result = None
+def parse_lines(data):
+    result = []
+    for line in data:
+        poses = line.split(" -> ")
+        pos_old = None
+        line = []
+        for p in poses:
+            line.append(pos:=tuple(map(int, p.split(","))))
+            if pos_old:
+                assert pos[0] == pos_old[0] or pos[1] == pos_old[1]
+            pos_old = pos
+        result.append(line)
     return result
 
+lines = parse_lines(data)
+# pprint(lines)
+
+def build_cave(lines):
+    cave = {}
+    for line in lines:
+        # print(line)
+        p1 = line.pop(0)
+        while line:
+            p2 = line.pop(0)
+            # print("p2", p2)
+            if p1[0] == p2[0]:
+                i, j = 0, 1
+            else:
+                i, j = 1, 0
+            lower, upper = min(p1[j], p2[j]), max(p1[j], p2[j])
+            for k in range(lower, upper + 1):
+                coords = [0, 0]
+                coords[i] = p1[i]
+                coords[j] = k
+                # print(coords)
+                cave[tuple(coords)] = "#"
+            p1 = p2
+    return cave
+# pprint(lines)
+cave = build_cave(lines)
+# pprint(cave)
+
+def max_y(cave):
+    return max(_[1] for _ in cave.keys())
+
+print("Cave depth", max_y(cave))
+
+def next_pos(cave, pos):
+    x, y = pos
+    if cave.get(p:=(x, y+1)) is None:
+        return p
+    if cave.get(p:=(x-1, y+1)) is None:
+        return p
+    if cave.get(p:=(x+1, y+1)) is None:
+        return p
+    return None
+
+def sand_fall(cave, start_pos=(500,0)):
+    depth = max_y(cave)
+    i = 0
+    path = [start_pos]
+    while path:
+        pos = path.pop()
+        npos = next_pos(cave, pos)
+        if npos:
+            # print(i, npos, path)
+            if npos[1] > depth:
+                return i
+            path.append(pos)
+            path.append(npos)
+            continue
+        cave[pos] = "o"
+        pos = path.pop()
+        i += 1
+        # print(i, path)
+
+result = sand_fall(cave)
+print("result", result)
+
+def main(data):
+    result = None
+    lines = parse_lines(data)
+    cave = build_cave(lines)
+    result = sand_fall(cave)
+    return result
+
+assert main(data) == test_result
 print(main(data))
 print("success")
+```
+### Sanity Checks
+```{python}
+data = read_input("14_input.txt")
+parse_lines(data)
 ```
 
 ```{python}
@@ -2384,6 +2477,47 @@ print("test result", main2(data))
 ```
 ```{python}
 data = read_input("15_input.txt")
+
+print("final result 2", main2(data))
+```
+
+## Day 16
+
+```{python}
+test_input = """
+""".splitlines()
+
+data = test_input
+
+def main(data):
+    result = None
+    return result
+
+print(main(data))
+print("success")
+```
+
+```{python}
+data = read_input("16_input.txt")
+
+print("final result", main(data))
+```
+
+## Day 16 - Part 2
+
+```{python}
+
+data = test_input
+
+def main2(data):
+    result = None
+    return result
+
+print("test result", main2(data))
+
+```
+```{python}
+data = read_input("16_input.txt")
 
 print("final result 2", main2(data))
 ```
