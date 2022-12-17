@@ -34,36 +34,331 @@ def read_input(s):
 ## Day 17
 
 ```{python}
-test_input = """
-""".splitlines()
+test_input = """>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>""".splitlines()
 
+@define
+class Rock:
+  data: dict[int, bool]
+  left: int = 0
+  bottom: int = 0
+  name: str = "Rock"
+
+  @property
+  def width(self):
+    return len(self.data[0])
+  
+  @property
+  def height(self):
+    return len(self.data)
+  
+  @property
+  def top(self):
+    return self.bottom + self.height - 1
+
+MINUS = Rock(
+  data={
+    0: [True, True, True, True],
+    },
+    name="MINUS",
+)
+
+PLUS = Rock(
+  data={
+    2: [False, True, False],
+    1: [True, True, True],
+    0: [False, True, False],
+  },
+  name="PLUS",
+)
+
+EL = Rock(
+  data = {
+    2: [False, False, True],
+    1: [False, False, True],
+    0: [True, True, True],
+  },
+  name="EL",
+)
+
+ONE = Rock(
+  data = {
+    3: [True],
+    2: [True],
+    1: [True],
+    0: [True],
+  },
+  name = "ONE",
+)
+
+
+SQUARE = Rock(
+  data = {
+    1: [True, True],
+    0: [True, True],
+  },
+  name="SQUARE",
+)
+
+def p(default):
+  def _p(b):
+    if b:
+      return default
+    return "."
+  return _p
+
+
+def print_grid(piece):
+  maxheight = max(piece.data.keys(), default=0)
+  for row in range(maxheight, -1, -1):
+    print(f"{row:3d} |{''.join(p('#')(_) for _ in piece.data.get(row, [False] * piece.width))}|")
+
+ROCKS = [MINUS, PLUS, EL, ONE, SQUARE]
+# for piece in ROCKS:
+#   print_grid(piece)
 data = test_input
 
-def main(data):
-    result = None
-    return result
 
-# print(main(data))
+from itertools import cycle
+Pushes = cycle(data[0])
+Rockses = cycle(ROCKS) 
+# for i in range(300):
+#   print(i, next(Pushes), next(Rockses))
+
+@define
+class Chamber:
+  width: int = 7
+  data: dict[int, bool] = {}
+  inner_height: int = -1
+
+  @property
+  def height(self):
+    return max(self.data.keys(), default=0)
+  
+  def default(self):
+    return [False] * self.width
+
+def new_rock(chamber, rock):
+  # print("inner height", chamber.inner_height)
+  rock = deepcopy(rock)
+  rock.bottom = chamber.inner_height + 3
+  rock.left = 2
+  return rock
+
+
+def overlay(chamber, rock):
+  overlay = deepcopy(chamber)
+  for i in range(rock.height):
+    act = rock.bottom + i
+    if act in overlay.data:
+      new_row = overlay.data[act]
+    else:
+      new_row = deepcopy(overlay.default())
+    for j in range(rock.width):
+        new_row[tj] = new_row[tj:=rock.left + j] or rock.data[i][j]
+    overlay.data[act] = new_row
+  # print(f"overlay: {overlay.inner_height=}, {rock.bottom=}, {rock.height=}")
+  overlay.inner_height = max(rock.bottom + rock.height - 1, overlay.inner_height)
+  return overlay
+    
+  
+def collision(chamber, rock):
+  for i in range(rock.height):
+    act = rock.bottom + i
+    try:
+      chamber_row = chamber.data[act]
+      rock_row = rock.data[i]
+    except:
+      return False
+    for j in range(rock.width):
+      if chamber_row[rock.left + j] and rock_row[j]:
+        return True
+  return False
+
+def push(chamber, rock, push):
+  if push == "<":  # push left
+    if rock.left == 0:
+      return rock, False
+    new_rock = deepcopy(rock)
+    new_rock.left -= 1
+    if collision(chamber, new_rock):
+      return rock, False
+    return new_rock, True
+  if push == ">":
+    if rock.left + rock.width == chamber.width:
+      return rock, False
+    new_rock = deepcopy(rock)
+    new_rock.left += 1
+    if collision(chamber, new_rock):
+      return rock, False
+    return new_rock, True
+  if push == "D":
+    if rock.bottom == 0:
+      return rock, False
+    new_rock = deepcopy(rock)
+    new_rock.bottom -= 1
+    if collision(chamber, new_rock):
+      return rock, False
+    return new_rock, True
+  raise ValueError(f"Unknown push value {push}")
+
+# print_grid(overlay(chamber, rock))
+# rock, _ = push(chamber, rock, ">")
+# print("---"); print_grid(overlay(chamber, rock))
+# rock, moved = push(chamber, rock, "D")
+# print("---"); print_grid(overlay(chamber, rock))
+# rock, moved = push(chamber, rock, ">")
+# print("---"); print_grid(overlay(chamber, rock))
+# rock, moved = push(chamber, rock, "D")
+# print("---"); print_grid(overlay(chamber, rock))
+# rock, moved = push(chamber, rock, ">")
+# print("---"); print_grid(overlay(chamber, rock)); print(moved)
+# rock, moved = push(chamber, rock, "D")
+# print("---"); print_grid(overlay(chamber, rock)); print(moved)
+# rock, moved = push(chamber, rock, "<")
+# print("---1"); print_grid(overlay(chamber, rock)); print(moved)
+# rock, moved = push(chamber, rock, "D")
+# print("---"); print_grid(overlay(chamber, rock)); print(moved)
+
+def drop_rock(chamber, rock, P, num=0):
+  cont = True
+  i = 0
+  pushes = []
+  # print("---", rock.name)
+  push_i, where = next(P)
+  next_pushes = (where, next(P)[1], next(P)[1], next(P)[1])
+  pushes += list(next_pushes)
+  rock_left = pre_drop_rock(rock.name, next_pushes)
+  rock.left = rock_left
+  rock.bottom = chamber.inner_height + 1
+  # print("start")
+  # print_grid(overlay(chamber, rock)), print()
+  # print_grid(chamber), print()
+  # print_grid(rock), print()
+  while cont:
+    i += 1
+    rock, cont = push(chamber, rock, "D")
+    # print("dropped", cont)
+    # print_grid(overlay(chamber, rock)), print()
+    # print_grid(chamber), print()
+    # print_grid(rock), print()
+    if cont:
+      where = next(P)[1]
+      pushes.append(where)
+      rock, moved = push(chamber, rock, where)
+      # print("pushed", moved)
+      # print_grid(overlay(chamber, rock)), print()
+      # print_grid(chamber), print()
+      # print_grid(rock), print()
+  result = overlay(chamber, rock)
+  # print_grid(result), print(f"inner height: {result.inner_height:,}")
+  # print(f"{num:4d} ", rock.name, result.inner_height, "".join(pushes))
+  return result, push_i
+  
+chamber = Chamber()
+
+
+@lru_cache
+def pre_drop_rock(rock_name, pushes):
+    # print(f"pdr: {rock_name=}, {pushes=}")
+    chamber = Chamber()
+    # match rock_name:
+    #   case "MINUS":
+    #     rock = deepcopy(MINUS)
+    #   case "PLUS":
+    #     rock = deepcopy(PLUS)
+    #   case "EL":
+    #     rock = deepcopy(EL)
+    #   case "ONE":
+    #     rock = deepcopy(ONE)
+    #   case "SQUARE":
+    #     rock = deepcopy(SQUARE)
+    rock = deepcopy({
+      "MINUS": MINUS,
+      "PLUS": PLUS,
+      "EL": EL,
+      "ONE": ONE,
+      "SQUARE": SQUARE,
+
+    })[rock_name]
+    rock = new_rock(chamber, rock)
+    for where in pushes[:-1]:
+      rock, _ = push(chamber, rock, where)
+      # print_grid(overlay(chamber, rock)), print(f"^^: {where}")
+      rock, _ = push(chamber, rock, "D")
+      # print_grid(overlay(chamber, rock)), print(f"^^: D")
+    rock, _ = push(chamber, rock, pushes[-1])
+    # print_grid(overlay(chamber, rock)), print(f"^^: {pushes[-1]} (end pdr)")
+
+    return rock.left
+
+
+
+def next_rock(chamber, P, R, num):
+  rock = next(R)
+  # print(rock.name)
+  return drop_rock(chamber, rock, P,num=num)
+
+from tqdm import tqdm
+def main(data):
+    Pushes = enumerate(cycle(data[0]))
+    Rockses = cycle(ROCKS) 
+    chamber = Chamber()
+    for i in range(2022):
+      chamber, push_i = next_rock(chamber, Pushes, Rockses, num=i)
+    print(push_i)
+    return chamber.inner_height + 1
+
+
+result = main(data)
+print(result)
+assert result == 3068
 # print("success")
 ```
 
 ```{python}
 data = read_input("17_input.txt")
-
-print("final result", main(data))
+print(data[0][:10])
+result = main(data)
+print("final result", result)
+assert result == 3085
 ```
 
 ## Day 17 - Part 2
 
 ```{python}
-
-data = test_input
+data = read_input("17_input.txt")
+# data = test_input
 
 def main2(data):
-    result = None
-    return result
+    inp = len(data[0])
+    r = len(ROCKS)
+    max_push = inp * r * 3
+    print(max_push)
+    f = open("track.csv", "w")
+    f.write("i\theight\tdelta\tpush_m\trock_m\tpush_i\n")
+    track = []
+    Pushes = enumerate(cycle(data[0]))
+    Rockses = cycle(ROCKS) 
+    chamber = Chamber()
+    old_height=0
+    push_i = 0
+    i = 0
+    
+    while push_i <= max_push:
+      i+=1
+      chamber, push_i = next_rock(chamber, Pushes, Rockses, num=i)
+      height = chamber.inner_height
+      track.append(f"{i}\t{height}\t{height-old_height}\t{push_i % inp}\t{i % r}\t{push_i}\n")
+      old_height = height
+      if i % 1000 == 0:
+        f.writelines(track)
+        track = []
+        print(f"{i//1000:3d}: {push_i:6d}/{max_push} = {push_i/max_push:6.1%} {dt.datetime.now().strftime('%H:%M:%S')}")
+    f.writelines(track)
+    f.close()
+    return push_i
 
-# print("test result", main2(data))
+print("test result", main2(data))
 
 ```
 ```{python}
@@ -71,3 +366,35 @@ data = read_input("17_input.txt")
 
 print("final result 2", main2(data))
 ```
+
+I did some analysis on `track.csv`.
+
+Looking at the last row (`i=11700`) I see the pair `push_m,rock_m == (8603,0)`.
+This pair also appears earlier, e.g. for `i=1470, 3175, 4880, 6585, ...`
+with corresponding heights `2211, 4829, 7447, 10065, ...`
+each time starting the same sequence of `delta` (namely `1,3,3,0,0,1,3,3`), i.e. both sequences have constants increments (1705 for the row, 2618 for the heights).
+
+We have
+
+```{python}
+
+i_step = 1705
+height_step = 2618
+
+big = 1_000_000_000_000
+
+cycles = big // i_step
+remain = big - cycles * i_step
+print(f"We have {cycles:,} cycles after a start of {remain:,}")
+# We have 586,510,263 cycles after a start of 1,585
+```
+
+In row 1585 we have the value 2390, leading to the final result:
+
+```{python}
+base = 2390
+result = base + cycles * height_step
+print(f"Final Result is {result:,}")  # 1,535,483,870,924
+```
+
+Note: it might have been better to have either verified that periodicity starts early enough, or have taken the base value one cycle later (e.g. at `remain + i_step == 3290`)

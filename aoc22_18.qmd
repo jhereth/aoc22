@@ -22,6 +22,7 @@ import datetime as dt
 from pprint import pprint
 
 from attr import define
+import matplotlib.pyplot as plt
 import networkx as nx
 
 def read_input(s):
@@ -29,13 +30,15 @@ def read_input(s):
         data = f.read().splitlines()
         return data
 ```
+[Private Leaderboard - Advent of Code 2022](https://adventofcode.com/2022/leaderboard/private/view/190395)  
+[Reference — NetworkX 2.8.8 documentation](https://networkx.org/documentation/stable/reference/index.html) . 
 
 
-## Day 17
+
+## Day 18
 
 ```{python}
-test_input = """
-""".splitlines()
+test_input = """""".splitlines()
 
 data = test_input
 
@@ -48,12 +51,12 @@ def main(data):
 ```
 
 ```{python}
-data = read_input("17_input.txt")
+data = read_input("18_input.txt")
 
 print("final result", main(data))
 ```
 
-## Day 17 - Part 2
+## Day 18 - Part 2
 
 ```{python}
 
@@ -67,7 +70,7 @@ def main2(data):
 
 ```
 ```{python}
-data = read_input("17_input.txt")
+data = read_input("18_input.txt")
 
 print("final result 2", main2(data))
 ```
