@@ -1,0 +1,86 @@
+---
+jupyter:
+  jupytext:
+    formats: 'ipynb,qmd'
+    text_representation:
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
+      jupytext_version: 1.14.1
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
+
+```{python}
+from collections import defaultdict
+from copy import copy
+from copy import deepcopy
+from functools import lru_cache
+import datetime as dt
+import operator as op
+from pprint import pprint
+
+from attr import define
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pandas as pd
+import pyrsistent
+from pyrsistent import pvector as V
+
+def read_input(s):
+    with open(f"./input/{s}") as f:
+        data = f.read().splitlines()
+        return data
+
+ef pw(a, b, op=op.and_):
+    return v([op(*_) for _ in zip(a, b)])
+```
+[Private Leaderboard - Advent of Code 2022](https://adventofcode.com/2022/leaderboard/private/view/190395)  
+[Reference — NetworkX 2.8.8 documentation](https://networkx.org/documentation/stable/reference/index.html)  
+[tobgu/pyrsistent: Persistent/Immutable/Functional data structures for Python](https://github.com/tobgu/pyrsistent#precord)  
+
+
+
+
+## Day 18
+
+```{python}
+test_input = """""".splitlines()
+
+data = test_input
+
+def main(data):
+    result = None
+    return result
+
+# print(main(data))
+# print("success")
+```
+
+```{python}
+data = read_input("18_input.txt")
+
+print("final result", main(data))
+```
+
+## Day 18 - Part 2
+
+```{python}
+
+data = test_input
+
+def main2(data):
+    result = None
+    return result
+
+# print("test result", main2(data))
+
+```
+```{python}
+data = read_input("18_input.txt")
+
+print("final result 2", main2(data))
+```
