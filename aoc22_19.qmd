@@ -28,20 +28,20 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pyrsistent
-from pyrsistent import pvector, v
-
+from pyrsistent import pvector as V
 
 def read_input(s):
     with open(f"./input/{s}") as f:
         data = f.read().splitlines()
         return data
 
-def pw(a, b, op=op.and_):
+ef pw(a, b, op=op.and_):
     return v([op(*_) for _ in zip(a, b)])
-
 ```
 [Private Leaderboard - Advent of Code 2022](https://adventofcode.com/2022/leaderboard/private/view/190395)  
-[Reference — NetworkX 2.8.8 documentation](https://networkx.org/documentation/stable/reference/index.html) . 
+[Reference — NetworkX 2.8.8 documentation](https://networkx.org/documentation/stable/reference/index.html)  
+[tobgu/pyrsistent: Persistent/Immutable/Functional data structures for Python](https://github.com/tobgu/pyrsistent#precord)  
+
 
 
 

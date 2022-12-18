@@ -367,7 +367,7 @@ data = read_input("17_input.txt")
 print("final result 2", main2(data))
 ```
 
-I did some analysis on `track.csv`.
+I did some analysis on `track.csv` based on [this hint](https://stackoverflow.com/a/37385965).
 
 Looking at the last row (`i=11700`) I see the pair `push_m,rock_m == (8603,0)`.
 This pair also appears earlier, e.g. for `i=1470, 3175, 4880, 6585, ...`
