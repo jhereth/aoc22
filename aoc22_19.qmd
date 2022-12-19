@@ -22,7 +22,8 @@ import datetime as dt
 import operator as op
 from pprint import pprint
 
-from attr import define
+from attrs import define
+import attrs
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -35,7 +36,7 @@ def read_input(s):
         data = f.read().splitlines()
         return data
 
-ef pw(a, b, op=op.and_):
+def pw(a, b, op=op.and_):
     return v([op(*_) for _ in zip(a, b)])
 ```
 [Private Leaderboard - Advent of Code 2022](https://adventofcode.com/2022/leaderboard/private/view/190395)  
@@ -48,9 +49,169 @@ ef pw(a, b, op=op.and_):
 ## Day 18
 
 ```{python}
-test_input = """""".splitlines()
+test_input = """Blueprint 1: Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.
+Blueprint 2: Each ore robot costs 2 ore.  Each clay robot costs 3 ore.  Each obsidian robot costs 3 ore and 8 clay.  Each geode robot costs 3 ore and 12 obsidian.  """.splitlines()
 
 data = test_input
+
+@define(frozen=True)
+class Blueprint:
+    identifier: int
+    ore_cost: int
+    clay_cost: int
+    obsidian_ore_cost: int
+    obsidian_clay_cost: int
+    geode_ore_cost: int
+    geode_obsidian_cost: int
+
+
+
+def parse_input(data):
+    blueprints = []
+    for line in data:
+        stripped = [_.strip(".:") for _ in line.split()]
+        # print(stripped)
+        numbers = [int(_) for _ in stripped if _.isnumeric()]
+        # print(numbers)
+        bp = Blueprint(*numbers)
+        # print(bp)
+        blueprints.append(bp)
+    return blueprints
+
+blueprints = parse_input(data)
+print(blueprints)
+bp = blueprints[0]
+
+
+@define(frozen=True)
+class Supplies:
+    ore_bots: int = 1
+    clay_bots: int = 0
+    obsidian_bots: int = 0
+    geode_bots: int = 0
+    ore: int = 0
+    clay: int = 0
+    obsidian: int = 0
+    cracked_geods : int = 0
+
+
+from enum import Enum
+R = Enum("RobotTypes", ["Ore", "Clay", "Obsidian", "Geode"])
+
+CACHE = {
+    "processed": set(),
+    "max_found": 0,
+    "best_path": ()
+}
+
+def find_decisions(bp: Blueprint, supplies: Supplies):
+    if (
+        (supplies.obsidian >= bp.geode_obsidian_cost) 
+        and (supplies.ore >= bp.geode_ore_cost)
+    ):
+        yield R.Geode
+    else:
+        if (
+            supplies.obsidian >= bp.geode_obsidian_cost - supplies.obsidian
+            and
+            supplies.ore >= bp.geode_ore_cost - supplies.ore
+        ):
+            yield None
+        else:
+            if (
+                    supplies.clay >= bp.obsidian_clay_cost
+                and supplies.ore >= bp.obsidian_ore_cost
+                and supplies.obsidian_bots < bp.geode_obsidian_cost
+            ):
+                yield R.Obsidian
+            if (
+                supplies.ore >= bp.clay_cost
+                and supplies.clay_bots < bp.obsidian_clay_cost
+            ):
+                        yield R.Clay
+            if  (
+                    supplies.ore >= bp.ore_cost
+                    and supplies.ore_bots < max(bp.ore_cost, bp.clay_cost, bp.obsidian_ore_cost, bp.geode_ore_cost)
+            ):                
+                yield R.Ore
+        yield None
+
+def optimize(time_remaining: int, supplies: Supplies, bp: Blueprint, path=()):
+    global CACHE
+    # print("XXX", time_remaining, supplies, bp)
+    max_found = CACHE["max_found"]
+    # print(max_found, CACHE["max_found"], len(CACHE["processed"]))
+    if (t:=(time_remaining, supplies, bp)) in CACHE["processed"]:
+        return max_found
+    else:
+        # pprint(CACHE["processed"])
+        CACHE["processed"].add(t)
+        # print("XX", len(CACHE["processed"]))
+        # pprint(CACHE["processed"])
+
+    new_supplies = attrs.asdict(supplies)
+    new_supplies["ore"] += supplies.ore_bots
+    new_supplies["clay"] += supplies.clay_bots
+    new_supplies["obsidian"] += supplies.obsidian_bots
+    new_supplies["cracked_geods"] += supplies.geode_bots
+    if time_remaining <= 1:
+        return new_supplies["cracked_geods"]
+        # raise ValueError(f"{time_remaining} is too low ({bp=}, {supplies=})")
+    if supplies.cracked_geods + ((time_remaining) * (time_remaining - 1) // 2) <= max_found:
+        # print("achievable stop")
+        return max_found
+    branches = {}
+    for dec in find_decisions(bp, supplies):
+        dec_supplies = copy(new_supplies)
+        # print("XXX3", dec)
+        if dec == R.Geode:
+                dec_supplies["ore"] -= bp.geode_ore_cost
+                dec_supplies["obsidian"] =- bp.geode_ore_cost
+                dec_supplies["geode_bots"] += 1
+        elif dec == R.Obsidian:
+                dec_supplies["ore"] -= bp.obsidian_ore_cost
+                dec_supplies["clay"] -= bp.obsidian_clay_cost
+                dec_supplies["obsidian_bots"] +=1
+        elif dec ==  R.Clay:
+                dec_supplies["ore"] -= bp.clay_cost
+                dec_supplies["clay_bots"] += 1
+        elif dec ==  R.Ore:
+                dec_supplies["ore"] -= bp.ore_cost
+                dec_supplies["ore_bots"] += 1 
+        new_path = path + [dec]
+        branches[dec] = (optimize(time_remaining-1, Supplies(**dec_supplies), bp), new_path) 
+    best = max(branches, key=lambda x: branches[x][0])
+    new_max = branches[best][0]
+    # pprint(branches)
+    if new_max > max_found:
+        CACHE["max_found"] = new_max
+        CACHE["best_path"] = new_path
+        print(f"{dt.datetime.now().strftime('%HH:%MM:%SS')} - {time_remaining=} {new_max=} {max_found=} len={len(CACHE['processed'])} {CACHE['max_found']=} {path=} {supplies=}")
+        return  new_max, new_path
+    return max_found, None
+
+
+# def one_round(supplies, bp, time_budget=24):
+
+
+supplies = Supplies()
+# supplies20 = Supplies(ore_bots=1, clay_bots=4, obsidian_bots=2, ore=1, clay=21, obsidian=5)
+supplies23=Supplies(
+    ore_bots=1,
+    clay_bots=4,
+    obsidian_bots=2,
+    geode_bots=2,
+    ore=3,
+    clay=33,
+    obsidian=4,
+    cracked_geods=5,
+
+)
+optimize(1, supplies, bp, ()
+# print(optimize(24, supplies, bp, ()))
+
+for d in find_decisions(bp, supplies):
+    print(d)
 
 def main(data):
     result = None

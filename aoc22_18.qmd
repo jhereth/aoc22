@@ -206,6 +206,8 @@ def main2(data):
 ```
 ```{python}
 data = read_input("18_input.txt")
+cubes = parse_input(data)
+print(count_sides(cubes), count_outside_sides(cubes))
 
 print("final result 2", main2(data))
 ```
