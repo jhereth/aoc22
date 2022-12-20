@@ -62,41 +62,6 @@ def build_table(parsed):
     return result
 
 
-def _rotate(current: pvector, index, shift):
-    d(f"---")
-    d(current, index, shift)
-    start = shift[index]
-    by = current[start]
-    to  = (start + by) % (len(current) - 1)
-    if to == 0:
-        to = len(current) - 1
-    d(f"{by} moves from {start} to {to}")
-    if start == to:
-        return current, shift
-    after = current
-    if start < to:
-        for i in range(start, to):
-            after = after.set(i, current[i+1])
-            d(f"shifting {i=}, {shift=}")
-            shift = shift.set(shift.index(i+1), i)
-        d(f"almost: {shift=}")
-        after = after.set(to, by)
-        shift = shift.set(index, to)
-        d(f"after: {shift=}, {index=}, {to=}")
-    else:
-        d(f"working from {start=} down to {to=}")
-        for i in range(start, to, -1):
-            d(f"moving {i-1} ({current[i-1]}) to the right")
-            after = after.set(i, current[i-1])
-            shift = shift.set(shift.index(shift[i-1]), i)
-            d(f"shifting {i=}, {shift=}")
-        after = after.set(to, by)
-        shift = shift.set(index, to)
-            
-    d(f"{after=} ({shift=})")
-    return after, shift
-
-
 def print_table(table, level=0):
     if level >= DEBUG:
         s = rowify(table)
@@ -165,40 +130,6 @@ def rotate(current, index, *args):
 
 from tqdm import tqdm
 
-def _rotate_all(vector):
-    shift = initial_shift(vector)    
-    for i in tqdm(range(len(vector))):
-        vector, shift = rotate(vector, i, shift)
-    return vector
-
-
-def _get_numbers(vector):
-    start = vector.index(0)
-    d(start, level=10)
-    s = 0
-    # for i in [1, 2, 5]:
-    for i in [1000, 2000, 3000]:
-        print(i, r:=vector[(start + i) % len(vector)])
-        s+= r
-    return s
-
-def _test_rotate(parsed):
-    init = initial_shift(parsed)
-    current, shift = rotate(parsed, 0, init)
-    assert current == pvector([2, 1, -3, 3, -2, 0, 4])
-    current, shift = rotate(current, 1, shift)
-    assert current == pvector([1, -3, 2, 3, -2, 0, 4])
-    current, shift = rotate(current, 2, shift)
-    assert current == pvector([1, 2, 3, -2, -3, 0, 4])
-    current, shift = rotate(current, 3, shift)
-    assert current == pvector([1, 2, -2, -3, 0, 3, 4])
-    current, shift = rotate(current, 4, shift)
-    assert current == pvector([1, 2, -3, 0, 3, 4, -2])
-    current, shift = rotate(current, 5, shift)
-    assert current == pvector([1, 2, -3, 0, 3, 4, -2])
-    current, shift = rotate(current, 6, shift)
-    assert current == pvector([1, 2, -3, 4, 0, 3, -2])
-
 def test_build_table(parsed):
     table = build_table(parsed)
     pprint(table)
@@ -253,7 +184,6 @@ def get_numbers(table):
     return sum(results)
     
         
-from collections import Counter
 def test_get_numbers(table):
     number = get_numbers(table)
     assert number == 3
@@ -351,7 +281,11 @@ if __name__ == "__main__":
     # print(test_get_numbers(table))
     # 3653 too low results=[9708, 3447, -9502]
     # correct: 3700 [-1782, -1830, 7312]
-    # part1(table)
+    table1 = deepcopy(table)
+    part1(table1)
     
     part2(table)
+    # Three numbers: results=[7904066761067, 5570747946192, -2847866337877]
+    # 10626948369382
+
     
