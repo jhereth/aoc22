@@ -328,7 +328,7 @@ def part1(table):
 def part2(table):
     encryption_key = 811589153
     table = [
-        (t[0], t[1], t[2] * encryption_key)
+        [t[0], t[1], t[2] * encryption_key]
         for t in table
     ]
     for _ in tqdm(range(10)):
@@ -339,7 +339,7 @@ if __name__ == "__main__":
     data = test_input
     data = read_input("20_input.txt")
     parsed = parse_input(data)
-    reddit_lines = reddit(1, parsed) 
+    # reddit_lines = reddit(1, parsed) 
     # reddit(2, parsed)
     # [7904066761067, 5570747946192, -2847866337877]
     # 10626948369382
@@ -347,11 +347,11 @@ if __name__ == "__main__":
     table = build_table(parsed=parsed)
     # test_rotate(table, 6)
     # test_rotate_all(table)
-    test_vs_reddit(table, reddit_lines)
+    # test_vs_reddit(table, reddit_lines)
     # print(test_get_numbers(table))
     # 3653 too low results=[9708, 3447, -9502]
     # correct: 3700 [-1782, -1830, 7312]
     # part1(table)
     
-    # part2(table)
+    part2(table)
     
