@@ -111,15 +111,21 @@ def rowify(table):
     return s
 
 def move(table, index, steps):
-    count = steps % (len(table) -1)
-    count = abs(steps)
-    dir = steps > 0
+    d(f"{index=} {steps=} {len(table)}", level=20)
+    count = steps % (len(table) - 1)
+    d(f"Doing {count} steps", level=5)
+    if steps < 0:
+        minus = 1
+    else:
+        minus = 0
+    # right = steps > 0
+    right = 1
     to = index
-    for i in range(count):
-        to = table[to][dir]
+    for i in range(count + minus):
+        to = table[to][right]
         if to == index:
-            to = table[index][dir]
-    d(f"Asked to move index {index} ({table[index][2]}) by {steps}. Tried going right {count}. Got {to} ({table[to][2]}).", level=5)
+            to = table[index][right]
+    d(f"Asked to move index {index} ({table[index][2]}) by {steps}. Tried going right {count}. Got {to} ({table[to][2]}).", level=10)
     return to
 
 def rotate(current, index, *args):
@@ -134,6 +140,8 @@ def rotate(current, index, *args):
         return current
     # d(f"Linking {val} original {index=} to {to=} ({current[to]})")
     to = move(current, index, val)
+    if to == index:
+        return current
     current[prev][1] = next_
     current[next_][0] = prev
     
@@ -215,10 +223,10 @@ def test_rotate(table, maxi=1):
     
 
 def rotate_all(table):
-    incremental = []
+    # incremental = []
     for i in tqdm(range(len(table))):
         table = rotate(table, i)
-        incremental.append(rowify(table))
+        # incremental.append(rowify(table))
     # return incremental
     return table
 
@@ -286,7 +294,7 @@ def test_vs_reddit(table, reddit):
             row = rowify(table)
             cont = compare_lines(row, reddit[i])
             if not cont:
-                print(f"Row {i} - {val} - {(i + val) % len(table)}")
+                print(f"Row {i:04d} - {val} - {(i + val) % len(table)}")
 
     
 
@@ -301,12 +309,12 @@ def compare_lines(my, r):
     assert len(my2) == len(r2)
     for i in range(len(my2)):
         if my2[i] != r2[i]:
-            print(f"Difference in position {i}: {my2[i]} vs {r2[i]}")
+            print(f"Difference in position {i:04d}: {my2[i]} vs {r2[i]}")
             print("--- XXX")
             for k in range(len(my2)):
-                print(k, my2[k], r2[k])
+                print(f"{k:04d}: {int(my2[k]):4d} {int(r2[k]):4d}")
             print("---")
-            print(f"Difference in position {i}: {my2[i]} vs {r2[i]}")
+            print(f"Difference in position {i:04d}: {my2[i]} vs {r2[i]}")
             return False
     raise Exception("This shouldn't happen")
 
@@ -316,11 +324,22 @@ def part1(table):
     print(get_numbers(table))  # 1644 too low results=[7318, 1742, -7416]
 
 
+
+def part2(table):
+    encryption_key = 811589153
+    table = [
+        (t[0], t[1], t[2] * encryption_key)
+        for t in table
+    ]
+    for _ in tqdm(range(10)):
+        table = rotate_all(table)
+    print(get_numbers(table))
+
 if __name__ == "__main__":
     data = test_input
     data = read_input("20_input.txt")
     parsed = parse_input(data)
-    # reddit_lines = reddit(1, parsed) 
+    reddit_lines = reddit(1, parsed) 
     # reddit(2, parsed)
     # [7904066761067, 5570747946192, -2847866337877]
     # 10626948369382
@@ -328,8 +347,11 @@ if __name__ == "__main__":
     table = build_table(parsed=parsed)
     # test_rotate(table, 6)
     # test_rotate_all(table)
-    # test_vs_reddit(table, reddit_lines)
+    test_vs_reddit(table, reddit_lines)
     # print(test_get_numbers(table))
     # 3653 too low results=[9708, 3447, -9502]
     # correct: 3700 [-1782, -1830, 7312]
-    part1(table)
+    # part1(table)
+    
+    # part2(table)
+    
