@@ -309,12 +309,18 @@ def compare_lines(my, r):
             print(f"Difference in position {i}: {my2[i]} vs {r2[i]}")
             return False
     raise Exception("This shouldn't happen")
+
+
+def part1(table):
+    table = rotate_all(table)
+    print(get_numbers(table))  # 1644 too low results=[7318, 1742, -7416]
+
+
 if __name__ == "__main__":
     data = test_input
     data = read_input("20_input.txt")
     parsed = parse_input(data)
     # reddit_lines = reddit(1, parsed) 
-    # correct: 3700 [-1782, -1830, 7312]
     # reddit(2, parsed)
     # [7904066761067, 5570747946192, -2847866337877]
     # 10626948369382
@@ -323,22 +329,7 @@ if __name__ == "__main__":
     # test_rotate(table, 6)
     # test_rotate_all(table)
     # test_vs_reddit(table, reddit_lines)
-    # my_lines = rotate_all(table)
-    # assert len(my_lines) == len(reddit_lines)
-    # for i in range(len(my_lines)):
-    #     if (ml:=my_lines[i]) != (rl:=reddit_lines[i]):
-    #         print(f"Found difference in line {i}")
-    #         for j in range(len(ml)):
-    #             if ml[j] != rl[j]:
-    #                 print(f"  Diff in position {j}: {ml[j]} - {rl[j]}")
-    #         raise Exception("Failed")
     # print(test_get_numbers(table))
-    table = rotate_all(table)
-    print(get_numbers(table))  # 1644 too low results=[7318, 1742, -7416]
     # 3653 too low results=[9708, 3447, -9502]
-    # current = rotate_all(parsed)
-    # print(current)
-    # assert current == pvector([1, 2, -3, 4, 0, 3, -2])
-    # s = get_numbers(current)    
-    # print(s)
-    # assert s == 3
+    # correct: 3700 [-1782, -1830, 7312]
+    part1(table)
