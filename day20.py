@@ -44,8 +44,14 @@ def initial_shift(data):
     return v(*list(range(len(data))))
 
 def parse_input(data):
-    result = [int(l) for l in data]
-    return v(*result)
+    result = []
+    for l in data:
+        val = int(l)
+        if val in result:
+            # continue
+            pass
+        result.append(val)
+    return result
 
 
 def build_table(parsed):
@@ -105,14 +111,17 @@ def rowify(table):
     return s
 
 def move(table, index, steps):
-    count = steps % len(table)
-    dir = True
-    if count > len(table) // 2:
-        dir = False
-        count = len(table) - count
+    # count = steps % len(table)
+    count = abs(steps)
+    dir = steps > 0
+    # if count > len(table) // 2:
+    #     dir = False
+    #     count = len(table) - count
     to = index
     for i in range(count):
         to = table[to][dir]
+        if to == index:
+            to = table[index][dir]
     d(f"Asked to move index {index} ({table[index][2]}) by {steps}. Tried going right {count}. Got {to} ({table[to][2]}).", level=5)
     return to
 
@@ -209,8 +218,11 @@ def test_rotate(table, maxi=1):
     
 
 def rotate_all(table):
+    incremental = []
     for i in tqdm(range(len(table))):
         table = rotate(table, i)
+        incremental.append(rowify(table))
+    # return incremental
     return table
 
 def test_rotate_all(table):
@@ -236,31 +248,97 @@ def get_numbers(table):
     return sum(results)
     
         
-
+from collections import Counter
 def test_get_numbers(table):
     number = get_numbers(table)
     assert number == 3
     return number
 
+def reddit_rowify(dcts):
+    return [str(_["val"]) for _ in dcts]
+    
+
+def reddit(part: int, int_arr):
+    incremental = []
+    if part == 1:
+        decr_key, decr_num = 1,1
+    else:
+        decr_key, decr_num = (811589153, 10) # use (1, 1) for part 1
+    dcts = [{"id": i, "val":v*decr_key} for i,v in enumerate(int_arr)]
+    for _ in range(decr_num):
+        for i in range(len(int_arr)):
+            pos = [ _["id"] for _ in dcts].index(i)
+            # d(f"{pos=}, {dcts[pos]=}")
+            val = dcts.pop(pos)["val"]
+            # dcts.insert((pos + (dct:=dcts.pop(pos))["val"]) % len(dct), dct)
+            dcts.insert((pos + val) % (len(int_arr)-1), {"id": i, "val": val,})
+            incremental.append(reddit_rowify(dcts))
+    return incremental
+    zeropos = [ _["val"] for _ in dcts].index(0)
+    results = [dcts[(zeropos + 1000*i) % len(dcts)]["val"] for i in range(1,4)]
+    print(results)
+    print(sum(results))
+
+
+def test_vs_reddit(table, reddit):
+    cont = True
+    for i in tqdm(range(len(table))):
+        if cont:
+            val = table[i][2]
+            table = rotate(table, i)
+            row = rowify(table)
+            cont = compare_lines(row, reddit[i])
+            if not cont:
+                print(f"Row {i} - {val} - {(i + val) % len(table)}")
+
+    
+
+
+def compare_lines(my, r):
+    mzero = my.index(str(0))
+    my2 = my[mzero:] + my[:mzero]
+    rzero = r.index(str(0))
+    r2 = r[rzero:] + r[:rzero]
+    if  my2 == r2:
+        return True
+    assert len(my2) == len(r2)
+    for i in range(len(my2)):
+        if my2[i] != r2[i]:
+            print(f"Difference in position {i}: {my2[i]} vs {r2[i]}")
+            print("--- XXX")
+            for k in range(len(my2)):
+                print(k, my2[k], r2[k])
+            print("---")
+            print(f"Difference in position {i}: {my2[i]} vs {r2[i]}")
+            return False
+    raise Exception("This shouldn't happen")
 if __name__ == "__main__":
-    # data = test_input
+    data = test_input
     data = read_input("20_input.txt")
     parsed = parse_input(data)
-    
+    # reddit_lines = reddit(1, parsed) 
+    # correct: 3700 [-1782, -1830, 7312]
+    # reddit(2, parsed)
+    # [7904066761067, 5570747946192, -2847866337877]
+    # 10626948369382
     # test_build_table(parsed=parsed)
     table = build_table(parsed=parsed)
-    print(data[:5])
-    print(parsed[:5])
-    print(table[:5])
-    print("----", len(data), len(parsed), len(table))
-    print(data[-5:])
-    print(parsed[-5:])
-    print(table[-5:])
     # test_rotate(table, 6)
     # test_rotate_all(table)
-    # table = rotate_all(table)
+    # test_vs_reddit(table, reddit_lines)
+    # my_lines = rotate_all(table)
+    # assert len(my_lines) == len(reddit_lines)
+    # for i in range(len(my_lines)):
+    #     if (ml:=my_lines[i]) != (rl:=reddit_lines[i]):
+    #         print(f"Found difference in line {i}")
+    #         for j in range(len(ml)):
+    #             if ml[j] != rl[j]:
+    #                 print(f"  Diff in position {j}: {ml[j]} - {rl[j]}")
+    #         raise Exception("Failed")
     # print(test_get_numbers(table))
-    print(get_numbers(table))
+    table = rotate_all(table)
+    print(get_numbers(table))  # 1644 too low results=[7318, 1742, -7416]
+    # 3653 too low results=[9708, 3447, -9502]
     # current = rotate_all(parsed)
     # print(current)
     # assert current == pvector([1, 2, -3, 4, 0, 3, -2])
