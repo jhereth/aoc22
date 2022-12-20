@@ -32,6 +32,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "astar"
+version = "0.94"
+requires_python = ">=3.8,<4.0.0"
+summary = "generic A-Star path searching algorithm"
+
+[[package]]
 name = "asttokens"
 version = "2.2.0"
 summary = "Annotate AST trees with source code positions"
@@ -895,7 +901,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:b5c314862fc31bf84c13a47c6e590d4be88161ee12a98b127d472af67d62d7be"
+content_hash = "sha256:322061a8c9b1edc769d0acdb150ac5d7c68789fa72c3f010dd1ea94bd620ea24"
 
 [metadata.files]
 "anyio 3.6.2" = [
@@ -932,6 +938,9 @@ content_hash = "sha256:b5c314862fc31bf84c13a47c6e590d4be88161ee12a98b127d472af67
     {url = "https://files.pythonhosted.org/packages/ee/0f/a2260a207f21ce2ff4cad00a417c31597f08eafb547e00615bcbf403d8ea/argon2_cffi_bindings-21.2.0-pp38-pypy38_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ed2937d286e2ad0cc79a7087d3c272832865f779430e0cc2b4f3718d3159b0cb"},
     {url = "https://files.pythonhosted.org/packages/f2/c6/e1ea7fc615ac7f9aaa4397e4ace245557d5bb25b4a594b06dccb2d90e05d/argon2_cffi_bindings-21.2.0-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:3e385d1c39c520c08b53d63300c3ecc28622f076f4c2b0e6d7e796e9f6502194"},
     {url = "https://files.pythonhosted.org/packages/f4/64/bef937102280c7c92dd47dd9a67b6c76ef6a276f736c419ea538fa86adf8/argon2_cffi_bindings-21.2.0-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:93f9bf70084f97245ba10ee36575f0c3f1e7d7724d67d8e5b08e61787c320ed7"},
+]
+"astar 0.94" = [
+    {url = "https://files.pythonhosted.org/packages/b2/2a/1c864b61158eef02ef7a0fc7e2703e9e1cddafbf7a29eabfa183bd5da2f5/astar-0.94-py3-none-any.whl", hash = "sha256:43c31590e990f4cc6fd2eb949c189958711f66f867f109c24014209d862186d1"},
 ]
 "asttokens 2.2.0" = [
     {url = "https://files.pythonhosted.org/packages/c5/28/c6cf14c78126cb7ae65ee81ad28f74bff0fb7b9e0ea773d543ce73904718/asttokens-2.2.0-py2.py3-none-any.whl", hash = "sha256:c56caef774a929923696f09ceea0eadcb95c94b30e8ee4f9fc4f5867096caaeb"},
