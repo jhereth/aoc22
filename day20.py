@@ -111,12 +111,9 @@ def rowify(table):
     return s
 
 def move(table, index, steps):
-    # count = steps % len(table)
+    count = steps % (len(table) -1)
     count = abs(steps)
     dir = steps > 0
-    # if count > len(table) // 2:
-    #     dir = False
-    #     count = len(table) - count
     to = index
     for i in range(count):
         to = table[to][dir]
