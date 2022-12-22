@@ -102,9 +102,22 @@ def get_start_pos(field):
             return (1, i, "R")
 
 
+wrap_map = {}
+wrap_map[(16, 12)] = {
+    (0, 0, "R"): (0,0, "R"),
+    (0, 0, "D"): (0,0, "D"),
+    (0, 0, "L"): (0,0, "L"),
+    (0, 0, "U"): (0,0, "U"), 
+}
+wrap_map[(200, 150)] = {
+    (0, 0, "R"): (0,0, "R"),
+    (0, 0, "D"): (0,0, "D"),
+    (0, 0, "L"): (0,0, "L"),
+    (0, 0, "U"): (0,0, "U"), 
+}
 
 @lru_cache
-def pre_step(i, j, face, cube_length):
+def pre_step(i, j, face, cube_sides=(16, 12)):
     _, fh, fw = field
     if face == "R":
         j+=1
@@ -118,28 +131,26 @@ def pre_step(i, j, face, cube_length):
     if j==0: j=fw
     if i>fh: i=1
     if j> fw: j=1
-    return i, j
+    return i, j, face
 
 
 @lru_cache
-def wrap_step(i,j, face, cube_length=None):
-    fdata, fh, fw = field
-    if cube_length is None:
-        cube_length = fw
-    i, j = pre_step(i, j, face, cube_length)
+def wrap_step(i,j, face, cube_length=(16,12)):
+    fdata, _, _ = field
+    i, j, face = pre_step(i, j, face, cube_length)
     while fdata[i].get(j) is None:
-        i, j = pre_step(i, j, face, cube_length)
-    return i, j
+        i, j, face = pre_step(i, j, face, cube_length)
+    return i, j, face
 
 @lru_cache
 def step(i, j, face):
     d(f"Step from {i},{j} to {face}", level=-1)
-    orig_i, orig_j = i, j
+    orig_i, orig_j, orig_face = i, j, face
     fdata, fh, fw = field
     d(f"{fw=}, {fh=}, {fdata[i]}", level=-20)
-    i, j = wrap_step(i, j, face)
-    if fdata[i].get(j) == ".": return i, j
-    if fdata[i].get(j) == "#": return orig_i, orig_j
+    i, j, face = wrap_step(i, j, face)
+    if fdata[i].get(j) == ".": return i, j, face
+    if fdata[i].get(j) == "#": return orig_i, orig_j, orig_face
 
 
 def move(start_pos, direction):
@@ -149,7 +160,7 @@ def move(start_pos, direction):
     if dir_type == M.Move:
         for _ in range(val):
             d(f"step {_} of {val} for move {direction} from {start_pos}", level=-5)
-            i, j = step(i, j, face)
+            i, j, face = step(i, j, face)
         return (i, j, face)
     else: # Rotate
         rots = {
