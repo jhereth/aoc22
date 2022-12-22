@@ -23,7 +23,7 @@ def read_input(s):
 def pw(a, b, op=op.and_):
     return v([op(*_) for _ in zip(a, b)])
 
-DEBUG = 30
+DEBUG = -20
 
 def d(*s, level=0):
     if level>=DEBUG:
@@ -54,7 +54,7 @@ def parse_field(data):
         for j, c in enumerate(row, start=1):
             if c in ".#":
                 field[i][j] = c
-    return field, len(data), len(data[0])
+    return field, len(data), max(len(_) for _ in data)
 
 def parse_input(data):
     dir_row = data.pop()
@@ -103,7 +103,7 @@ def get_start_pos(field):
 
 
 wrap_map = {}
-wrap_map[(16, 12)] = {
+wrap_map[(12, 16)] = {
     (0, 0, "R"): (0,0, "R"),
     (0, 0, "D"): (0,0, "D"),
     (0, 0, "L"): (0,0, "L"),
@@ -116,9 +116,46 @@ wrap_map[(200, 150)] = {
     (0, 0, "U"): (0,0, "U"), 
 }
 
+
+
+def jump(i, j, face, cube_sides):
+    cube_h, cube_w = cube_sides
+    d(f"jump: {i=}, {j=}, {face=} with cube sides {cube_w} - {cube_h}", level=30)
+    if face == "R":
+        j -= 2
+    if face == "D":
+        i -= 2 
+    this_i, this_j = (i // cube_h), (j // cube_w)
+    d(f"We are on side {this_i}, {this_j}", level = 40)
+    next_i, next_j, next_face = wrap_map[cube_sides][this_i, this_j, face]
+    new_pos = [0,0]
+    if next_face in "RL":
+        fix_dim = 1
+    else:
+        fix_dim = 0
+    if next_face in "RD":
+        fix_val = 1
+    else:
+        if next_face == "L":
+            fix_val = cube_w
+        else: # U
+            fix_val = cube_h
+    new_pos[fix_dim] = fix_val
+    var_dim = 1 - fix_dim
+    if ((face in "RU") == (next_face in "RU")):
+        var_val = [i, j][var_dim]
+    else:
+        var_val = cube_w -[i, j][var_dim]  # this could be wrong. But this only happens in Part 2 where cube_h==cube_w
+    new_pos[var_dim] = var_val
+    new_pos[0] += next_i * cube_h
+    new_pos[1] += next_j * cube_w 
+    return new_pos[0], new_pos[1], next_face 
+
 @lru_cache
 def pre_step(i, j, face, cube_sides=(16, 12)):
     _, fh, fw = field
+    cube_h, cube_w = cube_sides
+    d(f"pre_step: deriving {cube_w=}, {cube_h=} from {cube_sides=}", level=-30)
     if face == "R":
         j+=1
     elif face == "D":
@@ -126,11 +163,14 @@ def pre_step(i, j, face, cube_sides=(16, 12)):
     elif face == "L":
         j-=1
     elif face == "U":
-        i-=1    
-    if i==0: i=fh
-    if j==0: j=fw
-    if i>fh: i=1
-    if j> fw: j=1
+        i-=1
+    if ( ((face == "U") and (i % cube_h == 0))
+        or ((face == "L") and (j % cube_w == 0))
+        or ((face == "D") and (i % cube_h == 1))
+        or ((face == "R") and (j % cube_w == 0))
+    ):
+        d(f"pre_step: jumping {i=}, {j=}, {face=}, {cube_h=}, {cube_w=}, {i % cube_h=}, {j % cube_w=}")
+        i, j, face = jump(i, j, face, cube_sides) 
     return i, j, face
 
 
@@ -139,28 +179,32 @@ def wrap_step(i,j, face, cube_length=(16,12)):
     fdata, _, _ = field
     i, j, face = pre_step(i, j, face, cube_length)
     while fdata[i].get(j) is None:
+        d(f"wrap_step: Moving forward due to None ({i=}, {j=})", level=-5)
         i, j, face = pre_step(i, j, face, cube_length)
+    d(f"wrap_step: Returning {i=}, {j=}, {face=}, Value: {fdata[i].get(j)}")
     return i, j, face
 
 @lru_cache
-def step(i, j, face):
-    d(f"Step from {i},{j} to {face}", level=-1)
+def step(i, j, face, cube_length=(12,12)):
+    d(f"step: from {i},{j} to {face} ({cube_length=})", level=-1)
     orig_i, orig_j, orig_face = i, j, face
     fdata, fh, fw = field
-    d(f"{fw=}, {fh=}, {fdata[i]}", level=-20)
-    i, j, face = wrap_step(i, j, face)
+    d(f"{fw=}, {fh=}, {fdata[i]}", level=-30)
+    i, j, face = wrap_step(i, j, face, cube_length)
     if fdata[i].get(j) == ".": return i, j, face
     if fdata[i].get(j) == "#": return orig_i, orig_j, orig_face
 
 
-def move(start_pos, direction):
-    d(f"Moving from {start_pos} with {direction}", level=70)
+def move(start_pos, direction, cube_length=None):
+    if cube_length is None:
+        cube_length = field[1:3]
+    d(f"Moving from {start_pos} with {direction} ({cube_length=})", level=30)
     i, j, face = start_pos
     dir_type, val = direction
     if dir_type == M.Move:
         for _ in range(val):
-            d(f"step {_} of {val} for move {direction} from {start_pos}", level=-5)
-            i, j, face = step(i, j, face)
+            d(f"step {_} of {val} for move {direction} from {start_pos} ({i=}, {j=})", level=25)
+            i, j, face = step(i, j, face, cube_length)
         return (i, j, face)
     else: # Rotate
         rots = {
@@ -189,6 +233,11 @@ def moves(pos, moves):
 
 if __name__ == "__main__":
     data = test_input
+    dirs, field = parse_input(data)
+    start_pos1 = get_start_pos(field)
+    print(start_pos1)
+    pos1 = moves(start_pos1, dirs)
+
     data = read_input("22_input.txt")
     dirs, field = parse_input(data)
     # pprint(field)
@@ -197,4 +246,6 @@ if __name__ == "__main__":
     pos = moves(start_pos, dirs)
     print(pos)  # (149, 34, 'L') -> 1000 * 149 + 4 * 34 + 2
     print(field[1], field[2])
+    print(start_pos1) # (1, 9, 'R')
+    print(pos1)  #  (6, 8, 'R')
 
