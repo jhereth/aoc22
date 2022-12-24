@@ -23,7 +23,7 @@ def read_input(s):
 def pw(a, b, op=op.and_):
     return v([op(*_) for _ in zip(a, b)])
 
-DEBUG = 15
+DEBUG = 30
 
 def d(*s, level=0):
     if level>=DEBUG:
@@ -171,8 +171,8 @@ def build_graph(start_min=1, end_min=5, start_top=False):
     this_cand = {start_pos}
     for minute in tqdm(range(start_min, end_min + 1)):
         next_round = set()
-        d(f"We have {len(this_cand)} candidates entering minute {minute=}", level=20)
-        d(f"Candidates: {this_cand}", level=10)
+        d(f"build_graph: we have {len(this_cand)} candidates entering minute {minute=}", level=20)
+        d(f"build_graph: Candidates: {this_cand}", level=10)
         taken = taken_positions(minute=minute)
         for tc in this_cand:
             new_cands = find_neighbours(tc, taken)
@@ -193,13 +193,14 @@ def build_graph(start_min=1, end_min=5, start_top=False):
 if __name__ == "__main__":
     data = toy_input
     data = test_input
-    # data = read_input("24_input.txt")
+    data = read_input("24_input.txt")
     parse_input(data)
     print(f"{height=}, {width=}, {len(blizzards[0])=}")
     pprint(blizzards)
 
+    # Round 1
     # start_minute = 1
-    # max_minute=30
+    # max_minute=280
     # start_pos = (-1,0)
     # goal_pos = (height, width -1)
     # G = build_graph(start_min=start_minute, end_min=max_minute, start_top=True)
@@ -207,10 +208,13 @@ if __name__ == "__main__":
     # pprint(path)
     # print(f"{len(path) - 1} steps")  
     # Testinput: 18 steps (18==30)
-    
+    # Final
+    #      (24, 119, 273),
+    #  (25, 119, 280)]
+    # 274 steps
     # Round 2
-    # start_minute = 18
-    # max_minute=50
+    # start_minute = 274
+    # max_minute=900
     # G = build_graph(start_min=start_minute, end_min=max_minute, start_top=False)
     # start_node = (height, width-1, start_minute)
     # goal_node = (-1, 0, max_minute)
@@ -218,13 +222,19 @@ if __name__ == "__main__":
     # pprint(path)
     # print(f"{len(path) - 1} steps")  
     # Testinput: 23 steps (step 41==50)
+    # Final
+    #  (1, 0, 566),
+    # (0, 0, 567),
+    # (-1, 0, 900)]
+    # 294 steps (568==900)
+
 
     # Round 3
-    # start_minute = 41
-    # max_minute= 60
-    # G = build_graph(start_min=start_minute, end_min=max_minute, start_top=True)
-    # start_node = (-1, 0, start_minute)
-    # goal_node = (height, width-1, max_minute)
-    # path = nx.shortest_path(G, source=start_node, target=goal_node)
-    # pprint(path)
-    # print(f"{len(path) - 1} steps")  # Testinput: 13 steps (step 54==60) <- 54 is the solution
+    start_minute = 568
+    max_minute= 900
+    G = build_graph(start_min=start_minute, end_min=max_minute, start_top=True)
+    start_node = (-1, 0, start_minute)
+    goal_node = (height, width-1, max_minute)
+    path = nx.shortest_path(G, source=start_node, target=goal_node)
+    pprint(path)
+    print(f"{len(path) - 1} steps")  # Testinput: 13 steps (step 54==60) <- 54 is the solution
