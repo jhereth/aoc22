@@ -103,7 +103,7 @@ def sum_and_convert(lines):
 if __name__ == "__main__":
     # data = toy_input
     data = test_input
-    data = read_input("25_input.txt")
+    data = read_input("25   _input.txt")
     parsed = parse_input(data)
     result = sum_and_convert(parsed)
     # for d in [2022, 12345, 314159265]:

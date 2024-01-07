@@ -238,3 +238,7 @@ if __name__ == "__main__":
     path = nx.shortest_path(G, source=start_node, target=goal_node)
     pprint(path)
     print(f"{len(path) - 1} steps")  # Testinput: 13 steps (step 54==60) <- 54 is the solution
+    # (23, 119, 837),
+    # (24, 119, 838),
+    # (25, 119, 900)]: 839==900
+    # 271 steps
